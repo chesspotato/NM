@@ -1,0 +1,123 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MessageCircleHeart, Heart } from "lucide-react";
+import { Calculation } from "@/entities/Calculation";
+
+export default function LoveCalculator() {
+  const [name1, setName1] = useState("");
+  const [name2, setName2] = useState("");
+  const [result, setResult] = useState(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  const calculateLove = async () => {
+    setIsCalculating(true);
+    
+    try {
+      if (!name1.trim() || !name2.trim()) {
+        alert("Please enter both names");
+        setIsCalculating(false);
+        return;
+      }
+
+      const firstName = name1.trim();
+      const secondName = name2.trim();
+
+      // Easter egg check
+      const names = [firstName.toLowerCase(), secondName.toLowerCase()].sort();
+      let loveScore;
+      
+      if (names[0] === "dorothy" && names[1] === "nishanth") {
+        loveScore = 100;
+      } else {
+        // Generate consistent score based on names
+        const combinedNames = firstName + secondName;
+        const seed = combinedNames.toLowerCase().split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+        
+        // Use seed to generate consistent "random" number
+        const pseudoRandom = (seed * 9301 + 49297) % 233280;
+        loveScore = Math.floor((pseudoRandom / 233280) * 100) + 1;
+      }
+
+      setResult({
+        name1: firstName,
+        name2: secondName,
+        score: loveScore
+      });
+
+      // Save to history
+      await Calculation.create({
+        calculator_type: "love",
+        input_data: { name1: firstName, name2: secondName },
+        result: `${firstName} and ${secondName} have a ${loveScore}% love compatibility`,
+        calculation_date: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error("Calculation error:", error);
+      alert("An error occurred during calculation");
+    }
+    
+    setIsCalculating(false);
+  };
+
+  const reset = () => {
+    setName1("");
+    setName2("");
+    setResult(null);
+  };
+
+  const getLoveMessage = (score) => {
+    if (score === 100) return "A perfect match! Meant to be. ❤️";
+    if (score > 90) return "An excellent match! ✨";
+    if (score > 70) return "You two are highly compatible! 💕";
+    if (score > 50) return "There is potential here! 💫";
+    if (score > 30) return "It might take some work! 🤔";
+    return "Not a strong match, but anything is possible! 🤷";
+  };
+
+  const getScoreColor = (score) => {
+    if (score >= 80) return "from-pink-500 to-red-500";
+    if (score >= 60) return "from-purple-500 to-pink-500";
+    if (score >= 40) return "from-blue-500 to-purple-500";
+    return "from-gray-500 to-blue-500";
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-2xl">
+        <CardHeader className="text-center pb-6">
+          <div className="w-16 h-16 bg-gradient-to-r from-rose-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <MessageCircleHeart className="w-8 h-8 text-white" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-slate-900">
+            Love Compatibility Calculator
+          </CardTitle>
+          <p className="text-slate-600">Find out how compatible two people are ❤️</p>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="name1">Enter the first person's name</Label>
+            <Input
+              id="name1"
+              type="text"
+              placeholder="First name"
+              value={name1}
+              onChange={(e) => setName1(e.target.value)}
+              className="text-lg"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name2">Enter the second person's name</Label>
+            <Input
+              id="name2"
+ 

@@ -1,0 +1,41 @@
+{
+  "name": "Calculation",
+  "type": "object",
+  "properties": {
+    "calculator_type": {
+      "type": "string",
+      "enum": [
+        "basic",
+        "aura",
+        "birth",
+        "friday13",
+        "mounteverest",
+        "target",
+        "heart",
+        "random",
+        "love",
+        "gold",
+        "zodiac",
+        "school"
+      ],
+      "description": "Type of calculation performed"
+    },
+    "input_data": {
+      "type": "object",
+      "description": "Input values used for the calculation"
+    },
+    "result": {
+      "type": "string",
+      "description": "The calculated result"
+    },
+    "calculation_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the calculation was performed"
+    }
+  },
+  "required": [
+    "calculator_type",
+    "result"
+  ]
+}

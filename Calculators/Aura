@@ -1,0 +1,123 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sparkles, Star } from "lucide-react";
+import { Calculation } from "@/entities/Calculation";
+
+const questions = [
+  {
+    id: "gyatt",
+    question: "How many gyatt have you rizzed up this week?",
+    options: [
+      { value: "none", label: "None", points: -1 },
+      { value: "one", label: "One", points: 1 },
+      { value: "two", label: "Two", points: 2 },
+      { value: "three", label: "Three", points: 3 },
+      { value: "four", label: "Four", points: 4 },
+      { value: "five", label: "Five", points: 5 },
+      { value: "more", label: "More than five", points: 6 }
+    ]
+  },
+  {
+    id: "brainrot",
+    question: "Would you consider yourself brainrotted?",
+    options: [
+      { value: "yes", label: "Yes", points: -1 },
+      { value: "maybe", label: "Maybe", points: 0 },
+      { value: "no", label: "No", points: 1 }
+    ]
+  },
+  {
+    id: "thoughts",
+    question: "How much aura do you think you have on a scale of 1 to 5?",
+    options: [
+      { value: "1", label: "1 - Very Low", points: 1 },
+      { value: "2", label: "2 - Low", points: 1 },
+      { value: "3", label: "3 - Medium", points: 3 },
+      { value: "4", label: "4 - High", points: 2 },
+      { value: "5", label: "5 - Very High", points: -1 }
+    ]
+  },
+  {
+    id: "sleep",
+    question: "What time do you go to sleep?",
+    options: [
+      { value: "early", label: "Before 8pm", points: 4 },
+      { value: "8pm", label: "8pm", points: 3 },
+      { value: "9pm", label: "9pm", points: 2 },
+      { value: "10pm", label: "10pm", points: 2 },
+      { value: "later", label: "Later than 10pm", points: -1 }
+    ]
+  },
+  {
+    id: "grass",
+    question: "How often do you touch grass?",
+    options: [
+      { value: "never", label: "Never", points: -2 },
+      { value: "rarely", label: "Rarely", points: 0 },
+      { value: "sometimes", label: "Sometimes", points: 1 },
+      { value: "often", label: "Often", points: 2 },
+      { value: "always", label: "Always", points: 3 }
+    ]
+  }
+];
+
+export default function AuraCalculator() {
+  const [answers, setAnswers] = useState({});
+  const [result, setResult] = useState(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  const handleAnswerChange = (questionId, value) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: value
+    }));
+  };
+
+  const calculateAura = async () => {
+    setIsCalculating(true);
+    
+    try {
+      if (Object.keys(answers).length !== questions.length) {
+        alert("Please answer all questions");
+        setIsCalculating(false);
+        return;
+      }
+
+      let totalAura = 0;
+      questions.forEach(question => {
+        const answer = answers[question.id];
+        const option = question.options.find(opt => opt.value === answer);
+        if (option) {
+          totalAura += option.points;
+        }
+      });
+
+      setResult(totalAura);
+
+      // Save to history
+      await Calculation.create({
+        calculator_type: "aura",
+        input_data: { answers },
+        result: `You have ${totalAura} out of a max aura score of 17`,
+        calculation_date: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error("Calculation error:", error);
+      alert("An error occurred during calculation");
+    }
+    
+    setIsCalculating(false);
+  };
+
+  const reset = () => {
+    setAnswers({});
+    setResult(null);
+  };
+
+  const getAuraMessage = (score) => {
+ 

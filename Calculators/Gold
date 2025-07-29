@@ -1,0 +1,123 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Coins, TrendingUp } from "lucide-react";
+import { Calculation } from "@/entities/Calculation";
+
+export default function GoldCalculator() {
+  const [weight, setWeight] = useState("");
+  const [unit, setUnit] = useState("");
+  const [result, setResult] = useState(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  const calculateGoldValue = async () => {
+    setIsCalculating(true);
+    
+    try {
+      if (!weight || !unit) {
+        alert("Please enter weight and select a unit");
+        setIsCalculating(false);
+        return;
+      }
+
+      const weightValue = parseFloat(weight);
+      if (weightValue <= 0) {
+        alert("Please enter a valid weight");
+        setIsCalculating(false);
+        return;
+      }
+
+      const goldPricePerGram = 108.24; // USD per gram as of the script date
+      let weightInGrams;
+
+      if (unit === "kilograms") {
+        weightInGrams = weightValue * 1000;
+      } else if (unit === "pounds") {
+        weightInGrams = weightValue * 453.592;
+      }
+
+      const goldValue = weightInGrams * goldPricePerGram;
+
+      setResult({
+        value: goldValue,
+        weight: weightValue,
+        unit,
+        weightInGrams,
+        pricePerGram: goldPricePerGram
+      });
+
+      // Save to history
+      await Calculation.create({
+        calculator_type: "gold",
+        input_data: { weight: weightValue, unit },
+        result: `${weightValue} ${unit} of gold is worth $${goldValue.toFixed(2)} USD`,
+        calculation_date: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error("Calculation error:", error);
+      alert("Invalid weight entered");
+    }
+    
+    setIsCalculating(false);
+  };
+
+  const reset = () => {
+    setWeight("");
+    setUnit("");
+    setResult(null);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-2xl">
+        <CardHeader className="text-center pb-6">
+          <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Coins className="w-8 h-8 text-white" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-slate-900">
+            Gold Price Calculator
+          </CardTitle>
+          <p className="text-slate-600">Calculate your gold's current value 💰</p>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          <div className="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border border-yellow-200">
+            <p className="text-sm text-yellow-800 text-center">
+              <strong>Current Gold Price:</strong> $108.24 per gram
+              <br />
+              <span className="text-xs text-yellow-600">Based on July 20th, 2025 pricing</span>
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Weight measurement unit</Label>
+            <Select value={unit} onValueChange={setUnit}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose kilograms or pounds" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="kilograms">Kilograms</SelectItem>
+                <SelectItem value="pounds">Pounds</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="weight">
+              Enter the weight of your gold in {unit || "selected unit"}
+            </Label>
+            <Input
+              id="weight"
+              type="number"
+              step="0.001"
+              placeholder={unit === "kilograms" ? "e.g. 0.5" : "e.g. 1.1"}
+ 

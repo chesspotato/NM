@@ -1,0 +1,123 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Sparkles, Star } from "lucide-react";
+import { Calculation } from "@/entities/Calculation";
+
+const getZodiacSign = (month, day) => {
+  if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return "Aquarius ♒";
+  else if ((month === 2 && day >= 19) || (month === 3 && day <= 20)) return "Pisces ♓";
+  else if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return "Aries ♈";
+  else if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return "Taurus ♉";
+  else if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return "Gemini ♊";
+  else if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return "Cancer ♋";
+  else if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return "Leo ♌";
+  else if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return "Virgo ♍";
+  else if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return "Libra ♎";
+  else if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return "Scorpio ♏";
+  else if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return "Sagittarius ♐";
+  else if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return "Capricorn ♑";
+  else return "Unknown";
+};
+
+const zodiacDescriptions = {
+  "Aquarius ♒": "Independent, original, and progressive. You march to the beat of your own drum!",
+  "Pisces ♓": "Compassionate, artistic, and intuitive. You have a deep connection to emotions and creativity.",
+  "Aries ♈": "Bold, ambitious, and energetic. You're a natural leader who loves new challenges!",
+  "Taurus ♉": "Reliable, practical, and determined. You appreciate the finer things in life.",
+  "Gemini ♊": "Curious, adaptable, and communicative. You love learning and sharing ideas!",
+  "Cancer ♋": "Nurturing, loyal, and emotional. Family and home are very important to you.",
+  "Leo ♌": "Confident, generous, and dramatic. You love being in the spotlight!",
+  "Virgo ♍": "Analytical, helpful, and perfectionist. You have an eye for detail and love to organize.",
+  "Libra ♎": "Diplomatic, romantic, and balanced. You seek harmony in all aspects of life.",
+  "Scorpio ♏": "Passionate, mysterious, and intense. You have incredible depth and determination.",
+  "Sagittarius ♐": "Adventurous, optimistic, and philosophical. You love exploring new horizons!",
+  "Capricorn ♑": "Ambitious, disciplined, and practical. You're determined to reach the top!"
+};
+
+export default function ZodiacCalculator() {
+  const [month, setMonth] = useState("");
+  const [day, setDay] = useState("");
+  const [result, setResult] = useState(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  const calculateZodiac = async () => {
+    setIsCalculating(true);
+    
+    try {
+      if (!month || !day) {
+        alert("Please enter both month and day");
+        setIsCalculating(false);
+        return;
+      }
+
+      const monthNum = parseInt(month);
+      const dayNum = parseInt(day);
+
+      if (monthNum < 1 || monthNum > 12) {
+        alert("Month must be between 1 and 12");
+        setIsCalculating(false);
+        return;
+      }
+
+      if (dayNum < 1 || dayNum > 31) {
+        alert("Day must be between 1 and 31");
+        setIsCalculating(false);
+        return;
+      }
+
+      const zodiacSign = getZodiacSign(monthNum, dayNum);
+      const description = zodiacDescriptions[zodiacSign] || "Your zodiac sign is unique!";
+
+      setResult({
+        sign: zodiacSign,
+        description: description
+      });
+
+      // Save to history
+      await Calculation.create({
+        calculator_type: "zodiac",
+        input_data: { month: monthNum, day: dayNum },
+        result: `Your zodiac sign is: ${zodiacSign}`,
+        calculation_date: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error("Calculation error:", error);
+      alert("Please enter valid numbers for month and day");
+    }
+    
+    setIsCalculating(false);
+  };
+
+  const reset = () => {
+    setMonth("");
+    setDay("");
+    setResult(null);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-2xl">
+        <CardHeader className="text-center pb-6">
+          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Star className="w-8 h-8 text-white" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-slate-900">
+            Zodiac Sign Calculator
+          </CardTitle>
+          <p className="text-slate-600">Discover your celestial identity ✨</p>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="month">Birth Month (1-12)</Label>
+ 

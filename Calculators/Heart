@@ -1,0 +1,123 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Heart, Activity } from "lucide-react";
+import { Calculation } from "@/entities/Calculation";
+
+export default function HeartCalculator() {
+  const [year, setYear] = useState("");
+  const [month, setMonth] = useState("");
+  const [day, setDay] = useState("");
+  const [customRate, setCustomRate] = useState("");
+  const [useCustom, setUseCustom] = useState("no");
+  const [result, setResult] = useState(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  const calculateHeartbeats = async () => {
+    setIsCalculating(true);
+    
+    try {
+      if (!year || !month || !day) {
+        alert("Please enter your complete birth date");
+        setIsCalculating(false);
+        return;
+      }
+
+      if (useCustom === "yes" && (!customRate || customRate <= 0)) {
+        alert("Please enter a valid heart rate");
+        setIsCalculating(false);
+        return;
+      }
+
+      const birthYear = parseInt(year);
+      const birthMonth = parseInt(month);
+      const birthDay = parseInt(day);
+      const heartRate = useCustom === "yes" ? parseInt(customRate) : 72;
+
+      const birthDate = new Date(birthYear, birthMonth - 1, birthDay);
+      const now = new Date();
+      const ageInMinutes = Math.floor((now - birthDate) / (1000 * 60));
+      const totalBeats = ageInMinutes * heartRate;
+
+      setResult({
+        totalBeats,
+        heartRate,
+        ageInMinutes
+      });
+
+      // Save to history
+      await Calculation.create({
+        calculator_type: "heart",
+        input_data: { year: birthYear, month: birthMonth, day: birthDay, heartRate },
+        result: `Your heart has beaten approximately ${totalBeats.toLocaleString()} times`,
+        calculation_date: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error("Calculation error:", error);
+      alert("Invalid date or heart rate entered");
+    }
+    
+    setIsCalculating(false);
+  };
+
+  const reset = () => {
+    setYear("");
+    setMonth("");
+    setDay("");
+    setCustomRate("");
+    setUseCustom("no");
+    setResult(null);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-2xl">
+        <CardHeader className="text-center pb-6">
+          <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Heart className="w-8 h-8 text-white" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-slate-900">
+            Heartbeat Counter
+          </CardTitle>
+          <p className="text-slate-600">How many times has your heart beaten? 💓</p>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="year">Birth Year</Label>
+              <Input
+                id="year"
+                type="number"
+                placeholder="e.g. 2005"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                className="text-lg"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="month">Birth Month</Label>
+              <Input
+                id="month"
+                type="number"
+                placeholder="1-12"
+                min="1"
+                max="12"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+                className="text-lg"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="day">Birth Day</Label>
+              <Input
+ 

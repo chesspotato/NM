@@ -1,0 +1,165 @@
+import React, { useState, useEffect } from "react";
+import { Calculation } from "@/entities/Calculation";
+import { motion } from "framer-motion";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Clock, Calculator as CalcIcon, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { format } from "date-fns";
+
+export default function History() {
+  const [calculations, setCalculations] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
+  const loadHistory = async () => {
+    setIsLoading(true);
+    try {
+      const data = await Calculation.list("-created_date", 50);
+      setCalculations(data);
+    } catch (error) {
+      console.error("Error loading history:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const clearHistory = async () => {
+    // Note: Since we can't delete records, we'll just show empty state
+    setCalculations([]);
+  };
+
+  const getCalculatorTypeLabel = (type) => {
+    const labels = {
+      addition: "Addition",
+      subtraction: "Subtraction",
+      multiplication: "Multiplication", 
+      division: "Division",
+      aura: "Aura Score",
+      birth: "Birthday Stats",
+      friday13: "Friday 13th",
+      mounteverest: "Mount Everest",
+      target: "Countdown",
+      heart: "Heartbeat",
+      random: "Random Number",
+      love: "Love Compatibility",
+      gold: "Gold Price"
+    };
+    return labels[type] || type;
+  };
+
+  const getTypeColor = (type) => {
+    const colors = {
+      addition: "bg-blue-100 text-blue-800",
+      subtraction: "bg-blue-100 text-blue-800", 
+      multiplication: "bg-blue-100 text-blue-800",
+      division: "bg-blue-100 text-blue-800",
+      aura: "bg-purple-100 text-purple-800",
+      birth: "bg-green-100 text-green-800",
+      friday13: "bg-orange-100 text-orange-800",
+      mounteverest: "bg-emerald-100 text-emerald-800",
+      target: "bg-red-100 text-red-800",
+      heart: "bg-pink-100 text-pink-800",
+      random: "bg-gray-100 text-gray-800",
+      love: "bg-rose-100 text-rose-800",
+      gold: "bg-yellow-100 text-yellow-800"
+    };
+    return colors[type] || "bg-gray-100 text-gray-800";
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
+      <div className="max-w-4xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-8"
+        >
+          <div className="flex items-center gap-4">
+            <Link to={createPageUrl("Dashboard")}>
+              <Button variant="outline" size="icon" className="hover:bg-blue-50 hover:border-blue-200">
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Calculation History</h1>
+              <p className="text-slate-600">Review your past calculations</p>
+            </div>
+          </div>
+          
+          {calculations.length > 0 && (
+            <Button 
+              variant="outline" 
+              onClick={clearHistory}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Clear History
+            </Button>
+          )}
+        </motion.div>
+
+        {isLoading ? (
+          <div className="space-y-4">
+            {Array(5).fill(0).map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+                  <div className="h-6 bg-slate-200 rounded w-3/4"></div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        ) : calculations.length === 0 ? (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-12"
+          >
+            <CalcIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">No calculations yet</h3>
+            <p className="text-slate-600 mb-6">Start using the calculators to see your history here</p>
+            <Link to={createPageUrl("Dashboard")}>
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                Start Calculating
+              </Button>
+            </Link>
+          </motion.div>
+        ) : (
+          <div className="space-y-4">
+            {calculations.map((calc) => (
+              <motion.div
+                key={calc.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Card className="hover:shadow-lg transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Badge className={getTypeColor(calc.calculator_type)}>
+                          {getCalculatorTypeLabel(calc.calculator_type)}
+                        </Badge>
+                        <div className="flex items-center gap-1 text-sm text-slate-500">
+                          <Clock className="w-4 h-4" />
+                          {format(new Date(calc.created_date), "MMM d, yyyy 'at' h:mm a")}
+                        </div>
+                      </div>
+                    </div>
+                    <CardTitle className="text-lg font-semibold text-slate-900">
+                      {calc.result}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

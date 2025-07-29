@@ -1,0 +1,115 @@
+
+import React, { useState, useEffect } from "react";
+import { useSearchParams, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { User } from "@/entities/User";
+import {
+  ArrowLeft, Plus, Minus, X, Divide, Sparkles, Calendar,
+  Skull, Mountain, Target, Heart, Shuffle,
+  MessageCircleHeart, Coins, Calculator as CalcIcon, Lock
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { createPageUrl } from "@/utils";
+
+import BasicMathCalculator from "../components/calculators/BasicMathCalculator";
+import AuraCalculator from "../components/calculators/AuraCalculator";
+import BirthdayCalculator from "../components/calculators/BirthdayCalculator";
+import Friday13Calculator from "../components/calculators/Friday13Calculator";
+import EverestCalculator from "../components/calculators/EverestCalculator";
+import TargetCalculator from "../components/calculators/TargetCalculator";
+import HeartCalculator from "../components/calculators/HeartCalculator";
+import RandomCalculator from "../components/calculators/RandomCalculator";
+import LoveCalculator from "../components/calculators/LoveCalculator";
+import GoldCalculator from "../components/calculators/GoldCalculator";
+import ZodiacCalculator from "../components/calculators/ZodiacCalculator";
+import SchoolCalculator from "../components/calculators/SchoolCalculator";
+
+const calculatorComponents = {
+  basic: BasicMathCalculator, // Now handles all basic math operations
+  aura: AuraCalculator,
+  birth: BirthdayCalculator,
+  friday13: Friday13Calculator,
+  mounteverest: EverestCalculator,
+  target: TargetCalculator,
+  heart: HeartCalculator,
+  random: RandomCalculator,
+  love: LoveCalculator,
+  gold: GoldCalculator,
+  zodiac: ZodiacCalculator,
+  school: SchoolCalculator
+};
+
+const calculatorTitles = {
+  basic: "Standard Calculator",
+  aura: "Aura Score Calculator",
+  birth: "Birthday Statistics",
+  friday13: "Friday the 13th Counter",
+  mounteverest: "Mount Everest Height Comparison",
+  target: "Countdown Calculator",
+  heart: "Heartbeat Counter",
+  random: "Random Number Generator",
+  love: "Love Compatibility Calculator",
+  gold: "Gold Price Calculator",
+  zodiac: "Zodiac Sign Calculator",
+  school: "School Time Calculator"
+};
+
+const calculatorCategories = {
+  basic: {
+    title: "Basic Math",
+    calculators: [
+      { id: "basic", name: "Standard Calculator", icon: CalcIcon },
+    ]
+  },
+  fun: {
+    title: "Fun Calculators",
+    calculators: [
+      { id: "aura", name: "Aura Score", icon: Sparkles },
+      { id: "birth", name: "Birthday Stats", icon: Calendar },
+      { id: "friday13", name: "Friday the 13th", icon: Skull },
+      { id: "zodiac", name: "Zodiac Sign", icon: Sparkles },
+    ]
+  },
+  life: {
+    title: "Life Calculators",
+    calculators: [
+      { id: "target", name: "Countdown", icon: Target },
+      { id: "heart", name: "Heartbeat Counter", icon: Heart },
+      { id: "love", name: "Love Compatibility", icon: MessageCircleHeart },
+      { id: "school", name: "School Time", icon: Calendar },
+    ]
+  },
+  special: {
+    title: "Special Tools",
+    calculators: [
+      { id: "mounteverest", name: "Mount Everest", icon: Mountain },
+      { id: "random", name: "Random Number", icon: Shuffle },
+      { id: "gold", name: "Gold Price", icon: Coins },
+    ]
+  }
+};
+
+const defaultUnlocked = ["basic"]; // Only "basic" is unlocked by default
+
+export default function Calculator() {
+  const [searchParams] = useSearchParams();
+  const [unlockedCalculators, setUnlockedCalculators] = useState(defaultUnlocked);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const calcType = searchParams.get('calc');
+  const categoryType = searchParams.get('type');
+
+  useEffect(() => {
+    const fetchUserUnlocks = async () => {
+      setIsLoading(true);
+      try {
+        const currentUser = await User.me();
+        const userUnlocks = currentUser.unlocked_calculators || [];
+        // Use a Set to ensure unique values when combining default and user unlocks
+        setUnlockedCalculators([...new Set([...defaultUnlocked, ...userUnlocks])]);
+      } catch (error) {
+        console.info("User not logged in or failed to fetch unlocks, using default unlocks.", error);
+      }
+      setIsLoading(false);
+    };

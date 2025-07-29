@@ -1,0 +1,123 @@
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar, Clock, Heart } from "lucide-react";
+import { Calculation } from "@/entities/Calculation";
+
+export default function BirthdayCalculator() {
+  const [birthDate, setBirthDate] = useState("");
+  const [timeFormat, setTimeFormat] = useState("");
+  const [result, setResult] = useState(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  const calculateAge = async () => {
+    setIsCalculating(true);
+    
+    try {
+      if (!birthDate) {
+        alert("Please enter your birth date");
+        setIsCalculating(false);
+        return;
+      }
+
+      const birth = new Date(birthDate);
+      const today = new Date();
+      const timeDiff = today - birth;
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      
+      let additionalInfo = {};
+      
+      if (timeFormat === "minutes") {
+        additionalInfo.minutes = Math.floor(timeDiff / (1000 * 60));
+      } else if (timeFormat === "seconds") {
+        additionalInfo.seconds = Math.floor(timeDiff / 1000);
+      } else if (timeFormat === "both") {
+        additionalInfo.minutes = Math.floor(timeDiff / (1000 * 60));
+        additionalInfo.seconds = Math.floor(timeDiff / 1000);
+      }
+
+      const resultData = {
+        days: daysDiff,
+        ...additionalInfo
+      };
+
+      setResult(resultData);
+
+      // Save to history
+      await Calculation.create({
+        calculator_type: "birth",
+        input_data: { birthDate, timeFormat },
+        result: `It has been ${daysDiff.toLocaleString()} days since you were born`,
+        calculation_date: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error("Calculation error:", error);
+      alert("Invalid birth date");
+    }
+    
+    setIsCalculating(false);
+  };
+
+  const reset = () => {
+    setBirthDate("");
+    setTimeFormat("");
+    setResult(null);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-2xl">
+        <CardHeader className="text-center pb-6">
+          <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Calendar className="w-8 h-8 text-white" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-slate-900">
+            Birthday Statistics
+          </CardTitle>
+          <p className="text-slate-600">Discover how long you've been alive</p>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="birthdate">Enter your birth date</Label>
+            <Input
+              id="birthdate"
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="text-lg"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Want to see it in minutes, seconds, or both?</Label>
+            <Select value={timeFormat} onValueChange={setTimeFormat}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose time format (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="no">No extra time data</SelectItem>
+                <SelectItem value="minutes">Minutes</SelectItem>
+                <SelectItem value="seconds">Seconds</SelectItem>
+                <SelectItem value="both">Both minutes and seconds</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-3">
+            <Button 
+              onClick={calculateAge} 
+              disabled={isCalculating}
+              className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+            >
+              {isCalculating ? (
+ 

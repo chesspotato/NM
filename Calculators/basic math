@@ -1,0 +1,123 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Calculation } from '@/entities/Calculation';
+import { Divide, X, Minus, Plus, Percent, CornerDownLeft } from 'lucide-react';
+
+export default function BasicMathCalculator() {
+  const [input, setInput] = useState('0');
+  const [expression, setExpression] = useState('');
+
+  const handleNumber = (num) => {
+    if (input === '0' && num !== '.') {
+      setInput(String(num));
+    } else if (!input.includes('.') || num !== '.') {
+      setInput(input + String(num));
+    }
+  };
+
+  const handleOperator = (op) => {
+    if (input && input !== 'Error') {
+      setExpression(expression + input + op);
+      setInput('0');
+    } else if (expression) {
+      // Replace last operator if user changes their mind
+      setExpression(expression.slice(0, -1) + op);
+    }
+  };
+
+  const handleEquals = async () => {
+    if (!expression || !input || input === 'Error') return;
+    
+    let finalExpression = expression + input;
+    try {
+      // Security: Use a safer evaluation method than eval()
+      const evaluate = (exp) => {
+        // Replace visual operators with evaluatable ones
+        const evaluatableExp = exp.replace(/×/g, '*').replace(/÷/g, '/');
+        return new Function('return ' + evaluatableExp)();
+      };
+      
+      const result = evaluate(finalExpression);
+      
+      await Calculation.create({
+        calculator_type: "basic",
+        input_data: { expression: finalExpression },
+        result: `${finalExpression} = ${result}`,
+        calculation_date: new Date().toISOString(),
+      });
+      
+      setExpression(`${finalExpression} =`);
+      setInput(String(result));
+    } catch (e) {
+      setInput('Error');
+      setExpression('');
+    }
+  };
+
+  const handleClear = () => {
+    setInput('0');
+    setExpression('');
+  };
+
+  const handleBackspace = () => {
+    if (input === 'Error') {
+      handleClear();
+      return;
+    }
+    if (input.length > 1) {
+      setInput(input.slice(0, -1));
+    } else {
+      setInput('0');
+    }
+  };
+
+  const renderButton = (text, onClick, className = '', Icon) => (
+    <Button
+      onClick={onClick}
+      className={`h-16 text-2xl font-semibold rounded-2xl shadow-md transition-all duration-200 ease-in-out transform active:scale-95 ${className}`}
+      aria-label={text}
+    >
+      {Icon ? <Icon className="w-6 h-6" /> : text}
+    </Button>
+  );
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+      <Card className="border-0 bg-white/80 backdrop-blur-sm shadow-2xl max-w-sm mx-auto">
+        <CardContent className="p-4 space-y-4">
+          <div className="bg-slate-100/50 rounded-2xl p-4 text-right overflow-x-auto">
+            <div className="text-slate-500 text-lg min-h-[28px] break-all">{expression || ' '}</div>
+            <div className="text-slate-900 text-4xl font-bold break-all">{input}</div>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {renderButton('C', handleClear, 'bg-red-400/80 hover:bg-red-500/80 text-white')}
+            {renderButton('Backspace', handleBackspace, 'bg-slate-400/80 hover:bg-slate-500/80 text-white', CornerDownLeft)}
+            {renderButton('%', () => handleOperator('%'), 'bg-slate-400/80 hover:bg-slate-500/80 text-white', Percent)}
+            {renderButton('÷', () => handleOperator('÷'), 'bg-purple-500 hover:bg-purple-600 text-white', Divide)}
+
+            {renderButton('7', () => handleNumber(7), 'bg-white hover:bg-slate-50 text-slate-800')}
+            {renderButton('8', () => handleNumber(8), 'bg-white hover:bg-slate-50 text-slate-800')}
+            {renderButton('9', () => handleNumber(9), 'bg-white hover:bg-slate-50 text-slate-800')}
+            {renderButton('×', () => handleOperator('×'), 'bg-purple-500 hover:bg-purple-600 text-white', X)}
+
+            {renderButton('4', () => handleNumber(4), 'bg-white hover:bg-slate-50 text-slate-800')}
+            {renderButton('5', () => handleNumber(5), 'bg-white hover:bg-slate-50 text-slate-800')}
+            {renderButton('6', () => handleNumber(6), 'bg-white hover:bg-slate-50 text-slate-800')}
+            {renderButton('-', () => handleOperator('-'), 'bg-purple-500 hover:bg-purple-600 text-white', Minus)}
+
+            {renderButton('1', () => handleNumber(1), 'bg-white hover:bg-slate-50 text-slate-800')}
+            {renderButton('2', () => handleNumber(2), 'bg-white hover:bg-slate-50 text-slate-800')}
+            {renderButton('3', () => handleNumber(3), 'bg-white hover:bg-slate-50 text-slate-800')}
+            {renderButton('+', () => handleOperator('+'), 'bg-purple-500 hover:bg-purple-600 text-white', Plus)}
+
+            {renderButton('0', () => handleNumber(0), 'bg-white hover:bg-slate-50 text-slate-800 col-span-2')}
+            {renderButton('.', () => handleNumber('.'), 'bg-white hover:bg-slate-50 text-slate-800')}
+            {renderButton('=', handleEquals, 'bg-blue-500 hover:bg-blue-600 text-white')}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
